@@ -1,0 +1,39 @@
+{
+	"nodes":[
+		{"id":"f804c4ff25f19252","type":"group","x":460,"y":-20,"width":660,"height":100,"color":"6","label":"内核初始化阶段"},
+		{"id":"918c27d7244d5d7c","type":"group","x":-80,"y":-20,"width":440,"height":100,"color":"5","label":"Uboot"},
+		{"id":"854649628b445516","type":"group","x":1220,"y":-20,"width":300,"height":100,"color":"1","label":"用户空间初始化"},
+		{"id":"2ca8c38b9e9f1e5a","type":"group","x":-420,"y":-20,"width":200,"height":100,"color":"4","label":"硬件引导阶段"},
+		{"id":"6fcab7813bd8d1c1","type":"text","text":" Stage 1","x":-60,"y":0,"width":120,"height":60,"color":"5"},
+		{"id":"1e45610223a064c3","type":"text","text":"`Boot ROM`","x":-399,"y":0,"width":160,"height":60,"color":"4"},
+		{"id":"cb7118dd01ccfe72","type":"text","text":"执行 `Linux` 内核","x":480,"y":0,"width":200,"height":60,"color":"6"},
+		{"id":"4f4faa61ad39ec85","type":"text","text":"挂载 `initramfs` 并执行 `init` 脚本","x":780,"y":0,"width":320,"height":60,"color":"6"},
+		{"id":"a15f05198e91c7da","type":"text","text":"1. 内核解压和初始化：\n\t- 内核会进行解压并初始化内核数据结构，设置各类硬件控制器（如中断控制、内存管理、调度器等）\n2. 加载 `initramfs`：\n\t- 内核会解压 `initramfs` 到 RAM 中\n\t- 其内包含有一些系统启动的必要文件以及驱动程序","x":380,"y":-340,"width":400,"height":260,"color":"6"},
+		{"id":"5bef56baa881b252","type":"text","text":"1. CPU 启动，从预设地址执行 `Boot ROM`\n2. 进行最基础硬件初始化\n\t- 时钟、内存控制器等","x":-497,"y":110,"width":357,"height":150,"color":"4"},
+		{"id":"c02d51a0559be23a","type":"text","text":"1. 进一步初始化硬件\n\t- 初始化内存控制器\n\t- 配置基础外设，如串口、I/O 端口、外设时钟等\n2. 设置环境变量，获取启动命令以及文件路径等","x":-165,"y":-300,"width":330,"height":220,"color":"5"},
+		{"id":"968243fd2f7c517b","type":"text","text":"1. `Boot ROM` 本身存储空间有限，只能控制最基本的硬件，\n2. `Boot ROM` 的主要目的是为了确保 CPU 能正常运行并为后续引导过程做准备","x":-497,"y":300,"width":357,"height":180,"color":"4"},
+		{"id":"daec1e78d67c7cc1","type":"text","text":"Stage 2","x":220,"y":0,"width":120,"height":60,"color":"5"},
+		{"id":"c5ede6239ec668e9","type":"text","text":"1. 进行更复杂的硬件初始化\n\t- 配置硬盘、显示器、网络接口等设备\n2. 根据环境变量，选择一个设备 (`SD` 卡、`SPI Flash` 等) 作为内核和根文件系统存储介质\n3. 将 Linux 内核镜像（如 `vmlinuz`）和初始 RAM 文件系统 `initramfs` 加载到内存中","x":88,"y":110,"width":384,"height":260,"color":"5"},
+		{"id":"ba5b320335b2ec99","type":"text","text":"1. 将 `initramfs` 作为临时根文件系统到 `/`\n2. 执行 `initramfs` 内的 `/init` 脚本进行系统初始化\n\t- 根据 `/etc/fstab` 配置挂载其他文件系统\n\t\t- 根文件系统、数据分区等\n\t- 配置网络接口、启动基本服务\n3. `initramfs` 内的 `udev` 会自动扫描系统中的硬件设备，并加载适当的驱动程序","x":716,"y":110,"width":448,"height":260,"color":"6"},
+		{"id":"2a7db003610b41d9","type":"text","text":"1. `/init` 脚本会读取 `/etc/fstab` 文件，确定真实根文件系统位置\n2. 当 `initramfs` 配置和文件系统完成后，`initramfs` 会通过 `switch_root` 命令切换到新的根文件系统。此时，`initramfs` 的内存文件系统会被卸载，系统会被切换到持久存储中的根文件系统","x":1240,"y":110,"width":380,"height":260,"color":"6"},
+		{"id":"1945dfb9d6331778","type":"text","text":"启动用户空间进程","x":1240,"y":0,"width":260,"height":60,"color":"1"},
+		{"id":"4b840019bce9a5db","type":"text","text":"1. 内核启动 `/sbin/init` 进程，初始化系统服务并启动其他进程\n2. 根据系统初始化方案（`SysVinit` 或 `systemd`），`init` 会加载和执行相应的配置文件","x":1193,"y":-240,"width":355,"height":160,"color":"1"},
+		{"id":"275276d05f256edb","type":"text","text":"进入用户模式","x":1620,"y":0,"width":250,"height":60,"color":"4"}
+	],
+	"edges":[
+		{"id":"b62e97f57347944d","fromNode":"1e45610223a064c3","fromSide":"bottom","toNode":"5bef56baa881b252","toSide":"top"},
+		{"id":"d519c9a7e9fba625","fromNode":"1e45610223a064c3","fromSide":"right","toNode":"918c27d7244d5d7c","toSide":"left","label":"SPI Flash"},
+		{"id":"5731db861bf3845b","fromNode":"6fcab7813bd8d1c1","fromSide":"right","toNode":"daec1e78d67c7cc1","toSide":"left"},
+		{"id":"67b1d9497723b64a","fromNode":"6fcab7813bd8d1c1","fromSide":"top","toNode":"c02d51a0559be23a","toSide":"bottom"},
+		{"id":"f1ae861c6389b9e7","fromNode":"daec1e78d67c7cc1","fromSide":"bottom","toNode":"c5ede6239ec668e9","toSide":"top"},
+		{"id":"031d18d8e8af450d","fromNode":"918c27d7244d5d7c","fromSide":"right","toNode":"f804c4ff25f19252","toSide":"left"},
+		{"id":"3b7f1382e21bd17c","fromNode":"cb7118dd01ccfe72","fromSide":"top","toNode":"a15f05198e91c7da","toSide":"bottom"},
+		{"id":"2f29590de79e01bf","fromNode":"cb7118dd01ccfe72","fromSide":"right","toNode":"4f4faa61ad39ec85","toSide":"left"},
+		{"id":"a455202b76e0c072","fromNode":"4f4faa61ad39ec85","fromSide":"bottom","toNode":"ba5b320335b2ec99","toSide":"top"},
+		{"id":"ea0bcbce5c5b5d64","fromNode":"ba5b320335b2ec99","fromSide":"right","toNode":"2a7db003610b41d9","toSide":"left"},
+		{"id":"b9bf402bbddc8f31","fromNode":"f804c4ff25f19252","fromSide":"right","toNode":"854649628b445516","toSide":"left"},
+		{"id":"7fe34d673fecda54","fromNode":"1945dfb9d6331778","fromSide":"top","toNode":"4b840019bce9a5db","toSide":"bottom"},
+		{"id":"48649e1f6d55d3f5","fromNode":"5bef56baa881b252","fromSide":"bottom","toNode":"968243fd2f7c517b","toSide":"top"},
+		{"id":"b8c33ab7a6aeb7fe","fromNode":"854649628b445516","fromSide":"right","toNode":"275276d05f256edb","toSide":"left"}
+	]
+}
