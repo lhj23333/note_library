@@ -1,5 +1,9 @@
 /.obsidian
-/Learning/class 
+/Learning/class/DSP
+/Learning/class/最优化
+/Learning/class/机器人
+/Learning/class/计算机网络
+
 /project/Alpha
 /project/Android
 /project/IOT
@@ -10,6 +14,7 @@
 
 **/pic/
 *.excalidraw.md
+*.canvas
 /Learning/out_class/algorithm/C_base.md
 
 
