@@ -1,5 +1,5 @@
 
-## Manual Neural Nets
+## Manual Neural Nets (手动神经网络)
 
 ### 从线性假设类到非线性假设类
 
@@ -467,7 +467,7 @@ $$
 
 
 
-## Fully Connected networks, optimization
+## Fully Connected networks, optimization （全连接网络、优化算法）
 
 ### 全连接网络：
 
@@ -740,7 +740,7 @@ $$
 - **若 $\sigma^2$ 选择不当，激活值和梯度的方差会随着层数深度呈指数级增长或减小（几何级数变化），导致训练崩溃**
 
 
-## Neural Network Library Abstractions
+## Neural Network Library Abstractions （神经网络抽象）
 
 
 ### 编程抽象
@@ -916,7 +916,7 @@ h1​ → 全连接层 → ReLU → 全连接层 → 与h1​残差连接 → 
 
 #### 模块化组件：
 
-##### **nn. Module**（组件组合核心）：
+##### **nn.Module**（组件组合核心）：
 
 <div style="text-align: center;">
   <img src="https://obsidian-picgo-1331635585.cos.ap-guangzhou.myqcloud.com/PicGo_pictures/20251218214704051.png" Higth="30px"/>
@@ -1046,3 +1046,125 @@ $$
 		- 并不直接参与链式法则的求导计算，而是“接收“模型 `nn.Module` 计算好的结果
 		- 维护着权重的列表 $w_i$ 和对应的梯度 $g_i$
 		- 核心任务为根据优化算法（如 SGD 或 Adam）更新权重 $W_i$ 的值
+
+
+
+## Normalization and Regularization （归一化与正则化）
+
+### 深度网络的训练困境：Initialization vs. optimization
+
+- 在引入归一化之前，我们需要理解为什么深度网络如此难训练：
+	- 这不仅仅只是损失函数是非凸的问题
+	- **更在于激活值（Activation）和梯度（Gradient）在层级传递中的数值稳定性**
+
+1. **初始化困境**
+
+- 对于一个 50 层的全连接网络，使用不同的权重初始化方差 $\sigma^2$ 带来的后果：
+	- **方差过小**（$\sigma^2 = \frac{1}{n}$）：激活值的范数（Norm）随着层数增加而迅速衰减，梯度也随之小时，网络"死"了，没有任何学习进展 `No progress`
+	- **方差过大**（$\sigma^2 = \frac{3}{n}$）：激活值范数爆炸式增长，梯度计算出现 `NaNo`, 训练直接崩溃
+	- **方差适中**（$\sigma^2 = \frac{2}{n}$，类似于 **He Initialization**）：即使是精心挑选的初始化，随着层级加深，激活值的范数依然会出现漂移（Drift），并不是完全稳定
+
+<div style="text-align: center;">
+  <img src="https://obsidian-picgo-1331635585.cos.ap-guangzhou.myqcloud.com/PicGo_pictures/20251223172438229.png" Weigth="300px"/>
+</div>
+
+- **核心结论**：
+	- 即使经过几次迭代，权重的尺度都不会自动"修复"。
+	- 一个初始化糟糕的深度网络 (使用朴素 SGD) 是永远无法训练成功的。
+
+
+---
+### 归一化（Normalization）—— 强制修正
+
+- 既然依靠精细化的初始化（Initialization）很难维持整个训练过程中的数值稳定性，**Normalization** 的核心思想：**不要指望网络自己保持稳定，我们认为地在每一层强制"修复"激活值的分布**
+
+1. **Layer Normalization**（层归一化）：
+- 原理：
+	- 在每一层，对每一个样本的所有特征计算均值和方差，然后进行归一化 $\rightarrow$ **0 均值，1 方差**
+	- 相当于对激活矩阵 $Z$ 的**行（Row）** 进行初始化
+
+<div style="text-align: center;">
+  <img src="https://obsidian-picgo-1331635585.cos.ap-guangzhou.myqcloud.com/PicGo_pictures/20251223204814840.png" Weigth="300px"/>
+</div>
+
+- 计算公式：
+$$
+\hat{z}_{i+1} = \sigma_i(W_i^T z_i + b_i)
+$$
+$$
+z_{i+1} = \frac{\hat{z}_{i+1} - E[\hat{z}_{i+1}]}{\sqrt{Var[\hat{z}_{i+1}] + \epsilon}}
+$$
+- 效果：
+	- 完美解决了层级间激活值范数剧烈波动的问题，梯度范数也变得更加稳定
+
+<div style="text-align: center;">
+  <img src="https://obsidian-picgo-1331635585.cos.ap-guangzhou.myqcloud.com/PicGo_pictures/20251223204507115.png" Weigth="300px"/>
+</div>
+
+
+
+2. **Batch Normalization**（批归一化）：
+- 原理：
+	- 这是一个比较"奇特“的想法，它不是对单个样本进行归一化，而是对整个 **Minibatch** 中的**每一列（特征维度）** 进行归一化
+	- 相当于对激活矩阵 $Z$ 的**列（Col）** 进行初始化
+
+<div style="text-align: center;">
+  <img src="https://obsidian-picgo-1331635585.cos.ap-guangzhou.myqcloud.com/PicGo_pictures/20251223205246318.png" Weigth="300px"/>
+</div>
+- 计算公式：
+$$
+\hat{Z}_{(i+1)} = Normalize\_Columns(\hat{Z})
+$$
+
+- 但 Batch Normalization 存在一个问题：
+	- 在训练时：使用当前 Batch 的统计量（均值/方差），这导致一个样本的预测结果竟然依赖于同一个 Batch 里的其他样本
+- 常见的解决方法：
+	- 在推理（Test Time）：计算每层所有特征的均值/方差的移动平均值，即**训练过程中累计的移动平均（Running Average）统计量**进行归一化
+
+
+### 正则化（Regularization）—— 泛化能力的平衡
+
+- 深度网络通过是*过参数化（Overparameterized）的，参数量远大于样本量，理论上它们可以记住所有训练数据，导致过拟合* ，但神奇的是，它们通常在测试集上也表现很好（即泛化能力良好）
+- *正则化*旨在限制模型复杂度，提升其泛化能力
+
+1. 隐式 vs. 显式正则化
+
+- **隐式（Implicit）**：SGD 算法本身、网络架构、初始化方式，这些虽然不是为正则化设计的，但实际上起到了限制搜索空间的作用
+- **显示（Explicit）**：专门的设计手段，如 **$l_2$ 正则化**、**Dropout**
+
+2. **$l_2$ Regularization (Weight Decay)**：
+
+- **本质**：通过在损失函数中添加参数 $W$ 的 $l_2$ 范数偏置 $\frac{\lambda}{2} \sum_{i=1}^{D} ||W_i||^2_2$，使得权重 $W_i$ 保持较小的值
+$$
+minimize_{W_{1:D}} \frac{1}{m} \sum_{i = 1}^{m} l(h_{W_{1:D}}(x^{(i)}, y^{(i)})) + \frac{\lambda}{2} \sum_{i=1}^{D} ||W_i||^2_2$$
+
+- 优化更新：
+	- 相当于在每一步梯度下降前，先把权重缩小一点点：
+$$
+W_i := W_i - \alpha \nabla_{W_i} l(h(X), y) - \alpha \lambda W_i = (1 -\alpha\lambda)W_i - \alpha \nabla_{W_i} l(h(X), y)
+$$
+
+> [!NOTE] 深度学习中的悖论
+> 在使用 BatchNorm 的网络中，权重的尺度（Scale）实际上不影响输出（应为 BN 会把尺度消除）。但 $l_2$ 正则化依然有效，这说明“参数越小，模型越简单”这个经典直觉在深度学习中可能并不完全适用
+
+
+3. **Dropout**：
+
+- **操作**：
+	- 以概率 $p$ 随机将神经元的激活值置为 0
+	- 以概率 $1-p$ 将激活值除以 $1 - p$
+$$
+\hat{z}_{i+1} = \sigma_i (W_i^T z_i + b_i) 
+$$
+$$
+(Z_{i+1})_j = 
+\begin{cases}
+(\hat{z}_{i+1})_j / (1 - p) \ \ \ with \ probability \ 1- p\\
+\\
+\ \ \ \ \ \ \ \ \ \ \ 0 \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ with \ probability \ p
+\end{cases}
+$$
+
+- **理解视角**：
+	- 随机逼近（Stochastisc Approximation）: Dropout 可以看作是在激活值层面引入了类似于 SGD 在样本层面引入的随机噪声
+

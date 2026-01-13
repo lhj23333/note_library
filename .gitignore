@@ -1,11 +1,15 @@
-/.obsidian/
-/Learning/class/
-/project/
+/.obsidian
+/Learning/class 
+/project/Alpha
+/project/Android
+/project/IOT
+/project/OpenHarmony
 /Learning/out_class/control
 /Learning/out_class/方向/
-/Learning/out_class/algorithm/C_base.md
-/Learning/out_class/book/
+/Learning/out_class/book
 
 **/pic/
 *.excalidraw.md
+/Learning/out_class/algorithm/C_base.md
+
 
